@@ -5,6 +5,7 @@ defmodule GRPC.Adapter.Gun do
   # conn_pid and stream_ref is stored in `GRPC.Server.Stream`.
 
   @default_transport_opts [nodelay: true]
+  @default_http2_opts %{}
 
   @spec connect(GRPC.Channel.t(), any) :: {:ok, GRPC.Channel.t()} | {:error, any}
   def connect(channel, nil), do: connect(channel, %{})
@@ -13,7 +14,15 @@ defmodule GRPC.Adapter.Gun do
 
   defp connect_securely(%{cred: %{ssl: ssl}} = channel, opts) do
     transport_opts = Map.get(opts, :transport_opts, @default_transport_opts ++ ssl)
-    open_opts = %{transport: :ssl, protocols: [:http2], transport_opts: transport_opts}
+    http2_opts = Map.get(opts, :http2_opts, @default_http2_opts)
+
+    open_opts = %{
+      transport: :ssl,
+      protocols: [:http2],
+      transport_opts: transport_opts,
+      http2_opts: http2_opts
+    }
+
     open_opts = Map.merge(opts, open_opts)
 
     do_connect(channel, open_opts)
@@ -21,7 +30,15 @@ defmodule GRPC.Adapter.Gun do
 
   defp connect_insecurely(channel, opts) do
     transport_opts = Map.get(opts, :transport_opts, @default_transport_opts)
-    open_opts = %{transport: :tcp, protocols: [:http2], transport_opts: transport_opts}
+    http2_opts = Map.get(opts, :http2_opts, @default_http2_opts)
+
+    open_opts = %{
+      transport: :tcp,
+      protocols: [:http2],
+      transport_opts: transport_opts,
+      http2_opts: http2_opts
+    }
+
     open_opts = Map.merge(opts, open_opts)
 
     do_connect(channel, open_opts)
